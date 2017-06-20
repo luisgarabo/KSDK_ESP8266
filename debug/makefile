@@ -13,7 +13,7 @@ RM := rm -rf
 -include freertos/Source/portable/MemMang/subdir.mk
 -include freertos/Source/portable/GCC/ARM_CM0/subdir.mk
 -include freertos/Source/subdir.mk
--include esp8266/subdir.mk
+-include drivers/esp8266/subdir.mk
 -include drivers/subdir.mk
 -include devices/gcc/subdir.mk
 -include devices/subdir.mk

@@ -1,8 +1,13 @@
 Overview
 ========
-The UART example for FreeRTOS demonstrates the possibility to use the UART driver in the RTOS.
-The example uses single instance of UART IP and writes string into, then reads back chars.
-After every 4B received, these are sent back on UART.
+The Hello World project is a simple demonstration program that uses the SDK UART drivere in
+combination with FreeRTOS. The purpose of this demo is to show how to use the debug console and to
+provide a simple project for debugging and further development.
+
+The example application creates one task called hello_task. This task print "Hello world." message
+via debug console utility and suspend itself.
+
+
 
 Toolchain supported
 ===================
@@ -14,34 +19,40 @@ Toolchain supported
 
 Hardware requirements
 =====================
-- Mini USB cable
+- Mini/micro USB cable
 - FRDM-KL25Z board
 - Personal Computer
-- USB to Com Converter
 
 Board settings
 ==============
-Connect pin:
-- RX to of USB2COM J2-18
-- TX to of USB2COM J2-20
-- GND of USB2COM to J2-14
-
+This example project does not call for any special hardware configurations.
+Although not required, the recommendation is to leave the development board's jumper settings
+and configurations in default state when running this example.
 Prepare the Demo
 ================
-1.  Connect USB to Com Converter between the PC host and the port on the board.
-2.  Open a serial terminal on PC for serial device with these settings:
-    - 115200 baud rate
-    - 8 data bits
-    - No parity
-    - One stop bit
-    - No flow control
-3.  Download the program to the target board.
-4.  Reset the SoC and run the project.
+Connect a serial cable from the debug UART port of the board to the PC. Start Tera Term
+(http://ttssh2.osdn.jp) and make a connection to the virtual serial port.
+
+1. Start Tera Term
+2. New connection -> Serial
+3. Set appropriate COMx port (x is port number) in Port context menu. Number is provided by operation
+   system and could be different from computer to computer. Select COM number related to virtual
+   serial port. Confirm selected port by OK button.
+4. Set following connection parameters in menu Setup->Serial port...
+        Baud rate:    115200
+        Data:         8
+        Parity:       none
+        Stop:         1
+        Flow control: none
+5.  Confirm selected parameters by OK button.
+
 
 Running the demo
 ================
-You will see the welcome string printed out on the console.
-You can send characters to the console back and they will be printed out onto console in a group of 4 characters.
+After the board is flashed the Tera Term will print "Hello world" message on terminal.
+
+Example output:
+Hello world.
 Customization options
 =====================
 

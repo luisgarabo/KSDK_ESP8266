@@ -139,36 +139,37 @@ void itoa(int n, char s[])
 
 void sendATcmd(const char * cmd, char type, const char * params)
 {
-
-	LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, "AT", 2, 100);
-	LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, cmd, strlen(cmd), 100);
+	LPSCI_WriteBlocking(UART0, (uint8_t *)"AT", 2);
+	LPSCI_WriteBlocking(UART0, (uint8_t *)cmd, strlen(cmd));
 
 	if (type == ESP8266_CMD_QUERY)
-		LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, '?', 1, 100);
+		LPSCI_WriteBlocking(UART0, (uint8_t *)'?', 1);
 	else if (type == ESP8266_CMD_SETUP)
 	{
-		LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, "=", 1, 100);
-		LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, params, strlen(params), 100);
+		LPSCI_WriteBlocking(UART0, (uint8_t *)"=", 1);
+		LPSCI_WriteBlocking(UART0, (uint8_t *)params, strlen(params));
 	}
-	LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, "\r\n", 2, 100);
+
+	LPSCI_WriteBlocking(UART0, (uint8_t *)"\r\n", 2);
 }
 
 unsigned int readByteToBuffer()
 {
 	uint8_t receiveBuff;
-	int remaining;
 	char blockingmode = 1;
-	// Read the data in
+	size_t n;
 
+	// Read the data in
 	if (blockingmode)
 	{
-		LPUART_DRV_ReceiveDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, &receiveBuff, 1, 1000u);
+		//LPUART_DRV_ReceiveDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, &receiveBuff, 1, 1000u);
+		LPSCI_ReadBlocking(UART0, &receiveBuff, 1);
 	}
 	else
 	{
 	    // Wait to receive input data
-        LPUART_DRV_ReceiveData(WIFI_SHIELD_LPUART_INSTANCE, &receiveBuff, 1);
-        while (0x08U == LPUART_DRV_GetReceiveStatus(WIFI_SHIELD_LPUART_INSTANCE, NULL)){}
+        //LPUART_DRV_ReceiveData(WIFI_SHIELD_LPUART_INSTANCE, &receiveBuff, 1);
+        //while (0x08U == LPUART_DRV_GetReceiveStatus(WIFI_SHIELD_LPUART_INSTANCE, NULL)){}
 	}
 
 	if (receiveBuff != '\0')
@@ -332,7 +333,7 @@ char reset()
 {
 	sendATcmd(ESP_RESET, ESP8266_CMD_EXECUTE, ""); // Send AT+RST
 
-	if (readResponse(R_READY2, 100) > 0)
+	if (readResponse(R_READY1, 200) > 0)
 	{
 		return ESP8266_RSP_SUCCESS;
 	}
@@ -348,7 +349,7 @@ int16_t setMode(char mode)
 	sprintf(modeChar, "%d", mode);
 	sendATcmd(ESP_WIFI_MODE, ESP8266_CMD_SETUP, modeChar);
 
-	if (readResponse(R_OK, 3) > 0)
+	if (readResponse(R_OK, 100) > 0)
 	{
 		return ESP8266_RSP_SUCCESS;
 	}
@@ -407,19 +408,19 @@ int16_t connect(const char * ssid, const char * pwd)
 {
 	int16_t rsp;
 
-	LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, "AT", 2, 100);
-	LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, ESP_CONNECT_AP, sizeof(ESP_CONNECT_AP)-1, 100);
-	LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, "=\"", 2, 100);
-	LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, ssid, strlen(ssid), 100);
-	LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, "\"", 1, 100);
+	LPSCI_WriteBlocking(UART0, (uint8_t *)"AT", 2);
+	LPSCI_WriteBlocking(UART0, (uint8_t *)ESP_CONNECT_AP, sizeof(ESP_CONNECT_AP)-1);
+	LPSCI_WriteBlocking(UART0, (uint8_t *) "=\"", 2);
+	LPSCI_WriteBlocking(UART0, (uint8_t *) ssid, strlen(ssid));
+	LPSCI_WriteBlocking(UART0, (uint8_t *) "\"", 1);
 	if (pwd != NULL)
 	{
-		LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, ",", 1, 100);
-		LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, "\"", 1, 100);
-		LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, pwd, strlen(pwd), 100);
-		LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, "\"", 1, 100);
+		LPSCI_WriteBlocking(UART0, (uint8_t *) ",", 1);
+		LPSCI_WriteBlocking(UART0, (uint8_t *) "\"", 1);
+		LPSCI_WriteBlocking(UART0, (uint8_t *) pwd, strlen(pwd));
+		LPSCI_WriteBlocking(UART0, (uint8_t *) "\"", 1);
 	}
-	LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, "\r\n", 2, 100);
+	LPSCI_WriteBlocking(UART0, (uint8_t *) "\r\n", 2);
 
 	rsp = readResponses(R_OK, "FAIL");
 	if (rsp > 0)
@@ -468,7 +469,7 @@ int16_t disconnect()
 	sendATcmd(ESP_DISCONNECT, ESP8266_CMD_EXECUTE, ""); // Send AT+CWQAP
 	// Example response: \r\n\r\nOK\r\nWIFI DISCONNECT\r\n
 	// "WIFI DISCONNECT" comes up to 500ms _after_ OK.
-	rsp = readResponse(R_OK, 3);
+	rsp = readResponse(R_OK, 100);
 	if (rsp > 0)
 	{
 		return ESP8266_RSP_SUCCESS;
@@ -495,7 +496,7 @@ int16_t updateStatus()
 	// +CIPSTATUS:0,"TCP","192.168.0.100",54723,1\r\n
 	// +CIPSTATUS:1,"TCP","192.168.0.101",54724,1\r\n\r\nOK\r\n
 
-	rsp = readResponse(R_OK, 0);
+	rsp = readResponse(R_OK, 50);
 
 	{
 		char * p = searchBuffer("STATUS:");
@@ -621,7 +622,7 @@ uint8_t localIP()
 			}
 
 			//save the IP address confirmed by the WiFi module in the config structure.
-			strcpy(ConfigInfo.ReaderIPaddress, p);
+			strcpy(ConfigInfo.localIPaddress, p);
 
 			//return remoteIP;
 			return ESP8266_RSP_SUCCESS;
@@ -669,24 +670,24 @@ int16_t tcpConnect(const char * destination, const char * port, char keepaliveEn
 {
 	int16_t rsp;
 
-	LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, "AT", 2, 100);
-	LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, ESP_TCP_CONNECT, sizeof(ESP_TCP_CONNECT)-1, 100);
-	LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, "=\"", 2, 100);
-	LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, "TCP", 3, 100);
-	LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, "\"", 1, 100);
-	LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, ",", 1, 100);
-	LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, "\"", 1, 100);
-	LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, destination, strlen(destination), 100);
-	LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, "\"", 1, 100);
-	LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, ",", 1, 100);
-	LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, port, strlen(port), 100);
+	LPSCI_WriteBlocking(UART0, (uint8_t *) "AT", 2);
+	LPSCI_WriteBlocking(UART0, (uint8_t *) ESP_TCP_CONNECT, sizeof(ESP_TCP_CONNECT)-1);
+	LPSCI_WriteBlocking(UART0, (uint8_t *) "=\"", 2);
+	LPSCI_WriteBlocking(UART0, (uint8_t *) "TCP", 3);
+	LPSCI_WriteBlocking(UART0, (uint8_t *) "\"", 1);
+	LPSCI_WriteBlocking(UART0, (uint8_t *) ",", 1);
+	LPSCI_WriteBlocking(UART0, (uint8_t *) "\"", 1);
+	LPSCI_WriteBlocking(UART0, (uint8_t *) destination, strlen(destination));
+	LPSCI_WriteBlocking(UART0, (uint8_t *) "\"", 1);
+	LPSCI_WriteBlocking(UART0, (uint8_t *) ",", 1);
+	LPSCI_WriteBlocking(UART0, (uint8_t *) port, strlen(port));
 	if (keepaliveEnabled)
 	{
-		LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, ",", 1, 100);
-		LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, "3500", 4, 100);
+		LPSCI_WriteBlocking(UART0, (uint8_t *) ",", 1);
+		LPSCI_WriteBlocking(UART0, (uint8_t *) "3500", 4);
 	}
 
-	LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, "\r\n", 2, 100);
+	LPSCI_WriteBlocking(UART0, (uint8_t *) "\r\n", 2);
 
 	rsp = readResponses(R_OK, R_ERROR);
 	if (rsp > 0)
@@ -698,73 +699,39 @@ int16_t tcpConnect(const char * destination, const char * port, char keepaliveEn
 		return ESP8266_RSP_FAIL;
 	}
 
-
-//	print("AT");
-//	print(ESP_TCP_CONNECT);
-//	print('=');
-//	print("\"TCP\",");
-//	print("\"");
-//	print(destination);
-//	print("\",");
-//	print(port);
-//
-//	if (keepAlive > 0)
-//	{
-//		print(',');
-//		// keepAlive is in units of 500 milliseconds.
-//		// Max is 7200 * 500 = 3600000 ms = 60 minutes.
-//		print(keepAlive / 500);
-//	}
-//	print("\r\n");
-//	// Example good: CONNECT\r\n\r\nOK\r\n
-//	// Example bad: DNS Fail\r\n\r\nERROR\r\n
-//	// Example meh: ALREADY CONNECTED\r\n\r\nERROR\r\n
-//	int16_t rsp = readForResponses(R_OK, R_ERROR, CLIENT_CONNECT_TIMEOUT);
-//
-//	if (rsp < 0)
-//	{
-//		// We may see "ERROR", but be "ALREADY CONNECTED".
-//		// Search for "ALREADY", and return success if we see it.
-//		char * p = searchBuffer("ALREADY");
-//		if (p != NULL)
-//			return 2;
-//		// Otherwise the connection failed. Return the error code:
-//		return rsp;
-//	}
-//	// Return 1 on successful (new) connection
 	return 1;
 }
 
-int16_t setStaticIP(const char * staticIP, const char * Gateway, const char * Netmask)
-{
-	int16_t rsp;
-
-	LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, "AT", 2, 100);
-	LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, ESP_SET_STA_IP, sizeof(ESP_SET_STA_IP)-1, 100);
-	LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, "=\"", 2, 100);
-	LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, staticIP, strlen(staticIP), 100);
-	LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, "\"", 1, 100);
-	LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, ",", 1, 100);
-	LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, "\"", 1, 100);
-	LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, Gateway, strlen(Gateway), 100);
-	LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, "\"", 1, 100);
-	LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, ",", 1, 100);
-	LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, "\"", 1, 100);
-	LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, Netmask, strlen(Netmask), 100);
-	LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, "\"", 1, 100);
-
-	LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, "\r\n", 2, 100);
-
-	rsp = readResponse(R_OK, 0);
-	if (rsp > 0)
-	{
-		return ESP8266_RSP_SUCCESS;
-	}
-	else
-	{
-		return ESP8266_RSP_FAIL;
-	}
-}
+//int16_t setStaticIP(const char * staticIP, const char * Gateway, const char * Netmask)
+//{
+//	int16_t rsp;
+//
+//	LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, "AT", 2, 100);
+//	LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, ESP_SET_STA_IP, sizeof(ESP_SET_STA_IP)-1, 100);
+//	LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, "=\"", 2, 100);
+//	LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, staticIP, strlen(staticIP), 100);
+//	LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, "\"", 1, 100);
+//	LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, ",", 1, 100);
+//	LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, "\"", 1, 100);
+//	LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, Gateway, strlen(Gateway), 100);
+//	LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, "\"", 1, 100);
+//	LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, ",", 1, 100);
+//	LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, "\"", 1, 100);
+//	LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, Netmask, strlen(Netmask), 100);
+//	LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, "\"", 1, 100);
+//
+//	LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, "\r\n", 2, 100);
+//
+//	rsp = readResponse(R_OK, 0);
+//	if (rsp > 0)
+//	{
+//		return ESP8266_RSP_SUCCESS;
+//	}
+//	else
+//	{
+//		return ESP8266_RSP_FAIL;
+//	}
+//}
 
 int16_t tcpSend(const uint8_t *buf)
 {
@@ -784,8 +751,8 @@ int16_t tcpSend(const uint8_t *buf)
 	if (rsp != ESP8266_RSP_FAIL)
 	{
 		//print((const char *)buf);
-		LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, buf, size, 500);
-		LPUART_DRV_SendDataBlocking(WIFI_SHIELD_LPUART_INSTANCE, "+IPD", 4, 500);
+		LPSCI_WriteBlocking(UART0, (uint8_t *) buf, size);
+		LPSCI_WriteBlocking(UART0, (uint8_t *) "+IPD", 4);
 		rsp = readResponse("SEND OK", 0);
 		if (rsp > 0)
 		{
@@ -871,7 +838,7 @@ char validateServer(void)
 		{
 			//WiFi is down
 			ConfigInfo.Status = DISCONNECTED;
-			LED_WIFI_OFF;
+			//LED_WIFI_OFF;
 			return result;
 		}
 	}
@@ -882,7 +849,7 @@ char validateServer(void)
 	{
 		//Server is up
 		ConfigInfo.Status = CONNECTED;
-		LED_WIFI_ON;
+		//LED_WIFI_ON;
 
 		result = tcpConnect(ConfigInfo.ServerHostName, "80", 1);
 		if (result != ESP8266_RSP_SUCCESS)
@@ -890,7 +857,7 @@ char validateServer(void)
 			//Error must not continue
 			//WiFi is down
 			ConfigInfo.Status = DISCONNECTED;
-			LED_WIFI_OFF;
+			//LED_WIFI_OFF;
 			return result;
 		}
 
@@ -903,7 +870,7 @@ char validateServer(void)
 		{
 			//Server is up
 			ConfigInfo.Status = CONNECTED;
-			LED_WIFI_ON;
+			//LED_WIFI_ON;
 
 			result = tcpConnect(ConfigInfo.ServerIP, "80", 1);
 			if (result != ESP8266_RSP_SUCCESS)
@@ -911,14 +878,14 @@ char validateServer(void)
 				//Error must not continue
 				//WiFi is down
 				ConfigInfo.Status = DISCONNECTED;
-				LED_WIFI_OFF;
+				//LED_WIFI_OFF;
 				return result;
 			}
 		}
 		else
 		{
 			ConfigInfo.Status = DISCONNECTED;
-			LED_WIFI_OFF;
+			//LED_WIFI_OFF;
 		}
 	}
 }
@@ -984,7 +951,7 @@ char configWiFi(void)
 
 	if (ConfigInfo.DHCPEnable == '0')
 	{
-		result = setStaticIP(ConfigInfo.ReaderIPaddress,ConfigInfo.Gateway,ConfigInfo.Netmask);
+		//result = setStaticIP(ConfigInfo.localIPaddress,ConfigInfo.Gateway,ConfigInfo.Netmask);
 		if (result != ESP8266_RSP_SUCCESS)
 		{
 			//Error must not continue
@@ -1008,26 +975,28 @@ char configWiFi(void)
 		return result;
 	}
 
-	result = ping(ConfigInfo.ServerHostName);
-	if (result == ESP8266_RSP_SUCCESS)
-	{
-		//Server is up
-		ConfigInfo.Status = CONNECTED;
-	}
-	else
-	{
-		result = ping(ConfigInfo.ServerIP);
-		if (result == ESP8266_RSP_SUCCESS)
-		{
-			//Server is up
-			ConfigInfo.Status = CONNECTED;
-		}
-		else
-		{
-			//Server is down
-			ConfigInfo.Status = DISCONNECTED;
-		}
-	}
+//	result = ping(ConfigInfo.ServerHostName);
+//	if (result == ESP8266_RSP_SUCCESS)
+//	{
+//		//Server is up
+//		ConfigInfo.Status = CONNECTED;
+//	}
+//	else
+//	{
+//		result = ping(ConfigInfo.ServerIP);
+//		if (result == ESP8266_RSP_SUCCESS)
+//		{
+//			//Server is up
+//			ConfigInfo.Status = CONNECTED;
+//		}
+//		else
+//		{
+//			//Server is down
+//			ConfigInfo.Status = DISCONNECTED;
+//		}
+//	}
+
+	ConfigInfo.Status = CONNECTED;
 
 	return result;
 }
@@ -1042,11 +1011,11 @@ char sendDataToServer(void)
 	{
 		//Error must not continue
 		ConfigInfo.Status = DISCONNECTED;
-		LED_WIFI_OFF;
+		//LED_WIFI_OFF;
 		return result;
 	}
 
-	sprintf(HTTPrequest, "GET /interest.php?i=%s.%s.%s HTTP/1.0\r\n\r\n", ConfigInfo.ReaderID, CustomerInfo.TagUIDstr, DemoInfo.TagUIDstr);
+	//sprintf(HTTPrequest, "GET /interest.php?i=%s.%s.%s HTTP/1.0\r\n\r\n", ConfigInfo.ReaderID, CustomerInfo.TagUIDstr, DemoInfo.TagUIDstr);
 
 	//Send http request
 	result = tcpSend(HTTPrequest);
@@ -1054,7 +1023,7 @@ char sendDataToServer(void)
 	{
 		//Error must not continue
 		ConfigInfo.Status = DISCONNECTED;
-		LED_WIFI_OFF;
+		//LED_WIFI_OFF;
 		return result;
 	}
 
@@ -1082,72 +1051,72 @@ char sendFlipCommand(void)
 		//Error must not continue
 		//Error must not continue
 		ConfigInfo.Status = DISCONNECTED;
-		LED_WIFI_OFF;
+		//LED_WIFI_OFF;
 	}
 
 	return result;
 }
 
-char sendOpenURLCommand(void)
-{
-	char result;
-	char HTTPrequest[512] = {0};
+//char sendOpenURLCommand(void)
+//{
+//	char result;
+//	char HTTPrequest[512] = {0};
+//
+//	result = validateServer();
+//	if (result != ESP8266_RSP_SUCCESS)
+//	{
+//		//Error must not continue
+//		return result;
+//	}
+//
+//	if (RegisterDemo == 0x0)
+//	{
+//		sprintf(HTTPrequest, "GET /openurl.php?i=nxpurl1&d=%s HTTP/1.0\r\n\r\n", DemoInfo.TagUIDstr);
+//	}
+//	else
+//	{
+//		sprintf(HTTPrequest, "GET /registerdemo.php?i=%s&u=%s&d=%s HTTP/1.0\r\n\r\n", DemoInfo.TagUIDstr, url_encode(DemoInfo.URI), url_encode(DemoInfo.Text));
+//	}
+//
+//	//Send http request
+//	result = tcpSend(HTTPrequest);
+//	if (result != ESP8266_RSP_SUCCESS)
+//	{
+//		//Error must not continue
+//		ConfigInfo.Status = DISCONNECTED;
+//		LED_WIFI_OFF;
+//		return result;
+//	}
+//
+//	return result;
+//}
 
-	result = validateServer();
-	if (result != ESP8266_RSP_SUCCESS)
-	{
-		//Error must not continue
-		return result;
-	}
-
-	if (RegisterDemo == 0x0)
-	{
-		sprintf(HTTPrequest, "GET /openurl.php?i=nxpurl1&d=%s HTTP/1.0\r\n\r\n", DemoInfo.TagUIDstr);
-	}
-	else
-	{
-		sprintf(HTTPrequest, "GET /registerdemo.php?i=%s&u=%s&d=%s HTTP/1.0\r\n\r\n", DemoInfo.TagUIDstr, url_encode(DemoInfo.URI), url_encode(DemoInfo.Text));
-	}
-
-	//Send http request
-	result = tcpSend(HTTPrequest);
-	if (result != ESP8266_RSP_SUCCESS)
-	{
-		//Error must not continue
-		ConfigInfo.Status = DISCONNECTED;
-		LED_WIFI_OFF;
-		return result;
-	}
-
-	return result;
-}
-
-char sendFollowUpCommand(void)
-{
-	char result;
-	char HTTPrequest[512] = {0};
-
-	result = validateServer();
-	if (result != ESP8266_RSP_SUCCESS)
-	{
-		//Error must not continue
-		return result;
-	}
-
-	sprintf(HTTPrequest, "GET /followup.php?i=%s.%s&v=%s HTTP/1.0\r\n\r\n", DemoInfo.TagUIDstr, CustomerInfo.TagUIDstr, url_encode(StaffInfo.vCard));
-
-	//Send http request
-	result = tcpSend(HTTPrequest);
-	if (result != ESP8266_RSP_SUCCESS)
-	{
-		//Error must not continue
-		ConfigInfo.Status = DISCONNECTED;
-		LED_WIFI_OFF;
-		return result;
-	}
-
-	return result;
-}
+//char sendFollowUpCommand(void)
+//{
+//	char result;
+//	char HTTPrequest[512] = {0};
+//
+//	result = validateServer();
+//	if (result != ESP8266_RSP_SUCCESS)
+//	{
+//		//Error must not continue
+//		return result;
+//	}
+//
+//	sprintf(HTTPrequest, "GET /followup.php?i=%s.%s&v=%s HTTP/1.0\r\n\r\n", DemoInfo.TagUIDstr, CustomerInfo.TagUIDstr, url_encode(StaffInfo.vCard));
+//
+//	//Send http request
+//	result = tcpSend(HTTPrequest);
+//	if (result != ESP8266_RSP_SUCCESS)
+//	{
+//		//Error must not continue
+//		ConfigInfo.Status = DISCONNECTED;
+//		LED_WIFI_OFF;
+//		return result;
+//	}
+//
+//	return result;
+//}
 
 char wifisleep(uint8_t mode)
 {

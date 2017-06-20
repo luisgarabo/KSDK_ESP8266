@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>FRDM-KL25Z_ESP8266</name>
+	<name>UART0</name>
 	<comment></comment>
 	<projects>
 	</projects>
@@ -33,7 +33,7 @@
 	<variableList>
 		<variable>
 			<name>copy_PARENT</name>
-			<value>$%7BPARENT-3-ECLIPSE_HOME%7D/Garabo/Doc/CIATEQ/SDK_2.2_FRDM-KL25Z/boards/frdmkl25z/rtos_examples/freertos_uart</value>
+			<value>$%7BPARENT-3-ECLIPSE_HOME%7D/Garabo/Doc/CIATEQ/SDK_2.2_FRDM-KL25Z/boards/frdmkl25z/rtos_examples/freertos_hello</value>
 		</variable>
 		<variable>
 			<name>copy_PARENT1</name>

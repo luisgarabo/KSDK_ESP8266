@@ -518,7 +518,7 @@ status_t LPSCI_ClearStatusFlags(UART0_Type *base, uint32_t mask)
 
 void LPSCI_WriteBlocking(UART0_Type *base, const uint8_t *data, size_t length)
 {
-    assert(data);
+    //assert(data);
 
     /* This API can only ensure that the data is written into the data buffer but can't
     ensure all data in the data buffer are sent into the transmit shift buffer. */

@@ -43,18 +43,18 @@ PinsProfile:
 #include "fsl_port.h"
 #include "pin_mux.h"
 
-#define PIN0_IDX                         0u   /*!< Pin number for pin 0 in a port */
 #define PIN1_IDX                         1u   /*!< Pin number for pin 1 in a port */
-#define SOPT5_UART1RXSRC_UART_RX      0x00u   /*!< UART1 receive data source select: UART1_RX pin */
-#define SOPT5_UART1TXSRC_UART_TX      0x00u   /*!< UART1 transmit data source select: UART1_TX pin */
+#define PIN2_IDX                         2u   /*!< Pin number for pin 2 in a port */
+#define SOPT5_UART0RXSRC_UART_RX      0x00u   /*!< UART0 receive data source select: UART0_RX pin */
+#define SOPT5_UART0TXSRC_UART_TX      0x00u   /*!< UART0 transmit data source select: UART0_TX pin */
 
 /*
  * TEXT BELOW IS USED AS SETTING FOR THE PINS TOOL *****************************
 BOARD_InitPins:
 - options: {coreID: singlecore, enableClock: 'true'}
 - pin_list:
-  - {pin_num: '1', peripheral: UART1, signal: TX, pin_signal: PTE0/UART1_TX/RTC_CLKOUT/CMP0_OUT/I2C1_SDA}
-  - {pin_num: '2', peripheral: UART1, signal: RX, pin_signal: PTE1/SPI1_MOSI/UART1_RX/SPI1_MISO/I2C1_SCL}
+  - {pin_num: '28', peripheral: UART0, signal: TX, pin_signal: TSI0_CH3/PTA2/UART0_TX/TPM2_CH1}
+  - {pin_num: '27', peripheral: UART0, signal: RX, pin_signal: TSI0_CH2/PTA1/UART0_RX/TPM2_CH0}
  * BE CAREFUL MODIFYING THIS COMMENT - IT IS YAML SETTINGS FOR THE PINS TOOL ***
  */
 
@@ -65,14 +65,14 @@ BOARD_InitPins:
  *
  *END**************************************************************************/
 void BOARD_InitPins(void) {
-  CLOCK_EnableClock(kCLOCK_PortE);                           /* Port E Clock Gate Control: Clock enabled */
+  CLOCK_EnableClock(kCLOCK_PortA);                           /* Port A Clock Gate Control: Clock enabled */
 
-  PORT_SetPinMux(PORTE, PIN0_IDX, kPORT_MuxAlt3);            /* PORTE0 (pin 1) is configured as UART1_TX */
-  PORT_SetPinMux(PORTE, PIN1_IDX, kPORT_MuxAlt3);            /* PORTE1 (pin 2) is configured as UART1_RX */
+  PORT_SetPinMux(PORTA, PIN1_IDX, kPORT_MuxAlt2);            /* PORTA1 (pin 27) is configured as UART0_RX */
+  PORT_SetPinMux(PORTA, PIN2_IDX, kPORT_MuxAlt2);            /* PORTA2 (pin 28) is configured as UART0_TX */
   SIM->SOPT5 = ((SIM->SOPT5 &
-    (~(SIM_SOPT5_UART1TXSRC_MASK | SIM_SOPT5_UART1RXSRC_MASK))) /* Mask bits to zero which are setting */
-      | SIM_SOPT5_UART1TXSRC(SOPT5_UART1TXSRC_UART_TX)       /* UART1 transmit data source select: UART1_TX pin */
-      | SIM_SOPT5_UART1RXSRC(SOPT5_UART1RXSRC_UART_RX)       /* UART1 receive data source select: UART1_RX pin */
+    (~(SIM_SOPT5_UART0TXSRC_MASK | SIM_SOPT5_UART0RXSRC_MASK))) /* Mask bits to zero which are setting */
+      | SIM_SOPT5_UART0TXSRC(SOPT5_UART0TXSRC_UART_TX)       /* UART0 transmit data source select: UART0_TX pin */
+      | SIM_SOPT5_UART0RXSRC(SOPT5_UART0RXSRC_UART_RX)       /* UART0 receive data source select: UART0_RX pin */
     );
 }
 

@@ -29,8 +29,8 @@ sources \
 freertos/Source \
 freertos/Source/portable/MemMang \
 freertos/Source/portable/GCC/ARM_CM0 \
-esp8266 \
 drivers \
+drivers/esp8266 \
 devices \
 devices/gcc \
 
