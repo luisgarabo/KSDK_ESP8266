@@ -33,62 +33,35 @@
 #include "task.h"
 #include "queue.h"
 #include "timers.h"
-#include "main.h"
 
 /* Freescale includes. */
 #include "fsl_device_registers.h"
 #include "fsl_debug_console.h"
 #include "board.h"
 
-#include "fsl_uart_freertos.h"
-#include "fsl_uart.h"
-
 #include "pin_mux.h"
-#include "clock_config.h"
+#include "main.h"
 /*******************************************************************************
  * Definitions
  ******************************************************************************/
-/* UART instance and clock */
-#define DEMO_UART UART1
-#define DEMO_UART_CLKSRC BUS_CLK
-#define DEMO_UART_CLK_FREQ CLOCK_GetFreq(BUS_CLK)
-/* Task priorities. */
-#define uart_task_PRIORITY (configMAX_PRIORITIES - 1)
-/*******************************************************************************
- * Prototypes
- ******************************************************************************/
-static void uart_task(void *pvParameters);
-
-/*******************************************************************************
- * Variables
- ******************************************************************************/
-const char *to_send = "FreeRTOS UART driver example!\r\n";
-const char *send_ring_overrun = "\r\nRing buffer overrun!\r\n";
-const char *send_hardware_overrun = "\r\nHardware buffer overrun!\r\n";
-uint8_t background_buffer[32];
-uint8_t recv_buffer[4];
-
-uart_rtos_handle_t handle;
-struct _uart_handle t_handle;
-
-uart_rtos_config_t uart_config = {
-    .baudrate = 115200,
-    .parity = kUART_ParityDisabled,
-    .stopbits = kUART_OneStopBit,
-    .buffer = background_buffer,
-    .buffer_size = sizeof(background_buffer),
-};
 
 ConfigTag_t ConfigInfo =
 {
 		.ReaderID = {0},
-		.ReaderIPaddress = {0},
-		.DHCPEnable = 0,
+		.localIPaddress = {0},
+		.DHCPEnable = 1,
 		.SSID = {0},
 		.PWD = {0},
 		.ServerHostName = {0},
 		.ServerIP = {0},
 };
+
+/* Task priorities. */
+#define main_task_PRIORITY (configMAX_PRIORITIES - 1)
+/*******************************************************************************
+ * Prototypes
+ ******************************************************************************/
+static void main_task(void *pvParameters);
 
 /*******************************************************************************
  * Code
@@ -101,9 +74,17 @@ int main(void)
     /* Init board hardware. */
     BOARD_InitPins();
     BOARD_BootClockRUN();
+    BOARD_InitDebugConsole();
 
-    xTaskCreate(uart_task, "Uart_task", configMINIMAL_STACK_SIZE + 10, NULL, uart_task_PRIORITY, NULL);
+    //strcpy (ConfigInfo.SSID, "GaraboKings");
+    //strcpy (ConfigInfo.PWD, "1126300158");
 
+    strcpy (ConfigInfo.SSID, "External-Internet");
+    strcpy (ConfigInfo.PWD, "1Freescale");
+
+    configWiFi();
+
+    xTaskCreate(main_task, "main_task", configMINIMAL_STACK_SIZE + 10, NULL, main_task_PRIORITY, NULL);
     vTaskStartScheduler();
     for (;;)
         ;
@@ -112,55 +93,16 @@ int main(void)
 /*!
  * @brief Task responsible for printing of "Hello world." message.
  */
-static void uart_task(void *pvParameters)
+static void main_task(void *pvParameters)
 {
-    int error;
-    size_t n;
+	uint8_t receiveBuff;
 
-    uart_config.srcclk = DEMO_UART_CLK_FREQ;
-    uart_config.base = DEMO_UART;
-
-    if (0 > UART_RTOS_Init(&handle, &t_handle, &uart_config))
+    for (;;)
     {
+        //PRINTF("Hello world.\r\n");
+        //LPSCI_ReadBlocking(UART0, &receiveBuff, 1);
+        //LPSCI_WriteBlocking(UART0, (uint8_t *)"AT", 2);
+        //LPSCI_WriteBlocking(UART0, (uint8_t *)receiveBuff, 1);
         vTaskSuspend(NULL);
     }
-
-    /* Send some data */
-    if (0 > UART_RTOS_Send(&handle, (uint8_t *)to_send, strlen(to_send)))
-    {
-        vTaskSuspend(NULL);
-    }
-
-    /* Send data */
-    do
-    {
-        error = UART_RTOS_Receive(&handle, recv_buffer, sizeof(recv_buffer), &n);
-        if (error == kStatus_UART_RxHardwareOverrun)
-        {
-            /* Notify about hardware buffer overrun */
-            if (kStatus_Success !=
-                UART_RTOS_Send(&handle, (uint8_t *)send_hardware_overrun, strlen(send_hardware_overrun)))
-            {
-                vTaskSuspend(NULL);
-            }
-        }
-        if (error == kStatus_UART_RxRingBufferOverrun)
-        {
-            /* Notify about ring buffer overrun */
-            if (kStatus_Success != UART_RTOS_Send(&handle, (uint8_t *)send_ring_overrun, strlen(send_ring_overrun)))
-            {
-                vTaskSuspend(NULL);
-            }
-        }
-        if (n > 0)
-        {
-            /* send back the received data */
-            UART_RTOS_Send(&handle, (uint8_t *)recv_buffer, n);
-        }
-        vTaskDelay(1000);
-    } while (kStatus_Success == error);
-
-    UART_RTOS_Deinit(&handle);
-
-    vTaskSuspend(NULL);
 }

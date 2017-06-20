@@ -6,6 +6,8 @@
 #ifndef _MAIN_H_
 #define _MAIN_H_
 
+#include "fsl_uart.h"
+
 /* Type definitions */
 typedef enum
 {
@@ -19,7 +21,7 @@ typedef struct __attribute__ ((aligned (4)))
 	unsigned char		TagUID[7];
 	char                TagUIDstr[30];
 	char		        ReaderID[16];
-	char	        	ReaderIPaddress[16];
+	char	        	localIPaddress[16];
 	char        		Gateway[16];
 	char        		Netmask[16];
 	char				DHCPEnable;

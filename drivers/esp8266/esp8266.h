@@ -1,6 +1,18 @@
 #if !defined(__esp8266_H__)
 #define __esp8266_H__
 
+/*
+ * ESP8266 pinout
+ * 1- GND
+ * 2- TXO
+ * 3- GPIO2
+ * 4- CHPD
+ * 5- GPIO0
+ * 6- RST
+ * 7- RXI
+ * 8- 3V
+ */
+
 ///* Standard libraries includes */
 //#include <stdio.h>
 //#include <string.h>
@@ -11,6 +23,7 @@
 //#include <types.h>
 #include <string.h>
 #include "main.h"
+#include "fsl_uart.h"
 
 //Variables
 extern ConfigTag_t ConfigInfo;
